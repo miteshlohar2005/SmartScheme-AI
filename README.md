@@ -100,7 +100,7 @@ npm run preview
 
 ## 📂 Project Structure
 
-\`\`\`
+```text
 SmartScheme AI/
 ├── src/
 │   ├── components/       # Reusable UI components (Navbar, Footer, SchemeCard, GalaxyBackground)
@@ -123,7 +123,7 @@ SmartScheme AI/
 ├── .env                  # Environment Variables
 ├── package.json          # Dependencies and scripts
 └── vite.config.js        # Vite bundler configuration
-\`\`\`
+```
 
 ---
 
