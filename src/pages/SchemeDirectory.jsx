@@ -307,7 +307,7 @@ const SchemeDirectory = () => {
                             className="btn"
                             style={{ background: page === 1 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', color: page === 1 ? 'var(--slate-500)' : 'white' }}
                         >
-                            Previous
+                            {t('previous')}
                         </button>
                         <span style={{ color: 'var(--slate-300)', fontWeight: '500' }}>
                             Page {page} of {totalPages}
@@ -318,7 +318,7 @@ const SchemeDirectory = () => {
                             className="btn"
                             style={{ background: page === totalPages ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)', color: page === totalPages ? 'var(--slate-500)' : 'white' }}
                         >
-                            Next
+                            {t('next')}
                         </button>
                     </div>
                 )}

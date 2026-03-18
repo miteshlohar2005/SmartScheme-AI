@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useUser } from '../context/UserContext';
 
 const SchemeCard = memo(({ scheme }) => {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const language = i18n.language;
     const { toggleSaveScheme, isSchemeSaved, toggleCompareScheme, isSchemeCompared } = useUser();
     const saved = isSchemeSaved(scheme.id);

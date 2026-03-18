@@ -7,6 +7,7 @@ import GalaxyBackground from './components/GalaxyBackground';
 import PageTransition from './components/PageTransition';
 import { UserProvider } from './context/UserContext';
 import { ThemeProvider } from './context/ThemeContext'; // Fixed path
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 // Lazy load pages for performance
@@ -70,12 +71,16 @@ function App() {
       <UserProvider>
         <Router>
           <div className="flex-col min-h-screen">
-            <GalaxyBackground />
+            <ErrorBoundary>
+              <GalaxyBackground />
+            </ErrorBoundary>
             <Navbar />
             <main className="flex-grow" style={{ flex: 1, minHeight: 'calc(100vh - 140px)' }}>
-              <Suspense fallback={<PageLoader />}>
-                <AnimatedRoutes />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <AnimatedRoutes />
+                </Suspense>
+              </ErrorBoundary>
             </main>
             <Footer />
           </div>
