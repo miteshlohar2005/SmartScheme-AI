@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
 const schemeRoutes = require('./routes/schemeRoutes');
@@ -20,5 +20,5 @@ app.use('/api/schemes', schemeRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-    logger.log(`Backend server running on http://localhost:${PORT}`);
+    logger.log(`Backend server running on port ${PORT}`);
 });
