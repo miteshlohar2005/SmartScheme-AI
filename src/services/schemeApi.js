@@ -1,11 +1,12 @@
 // API Configuration
-const API_URL =
+// API Configuration
+const API_BASE_URL =
     import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const API_URL = `${API_URL}/api`;
+const API_URL = `${API_BASE_URL}/api`;
+
 // Simple in-memory cache for frontend to avoid re-fetching same queries instantly
 const cache = new Map();
-
 export const fetchSchemes = async ({
     page = 1,
     itemsPerPage = 12,
