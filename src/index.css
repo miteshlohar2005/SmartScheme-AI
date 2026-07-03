@@ -1,3 +1,13 @@
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 :root {
   --saffron: #8A5CFF;
   --saffron-light: #9F7BFF;
@@ -18,30 +28,30 @@
   --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
-  /* Theme variables - Light Mode (Default) - Purple+White Theme */
-  --bg-color: linear-gradient(135deg, #f7f6ff, #e9e4ff);
-  --text-primary: #1a1a1a;
-  --text-secondary: #555555;
-  --heading-color: #0f172a;
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --card-border: #e5e1ff;
-  --card-shadow: 0 10px 30px rgba(108, 59, 255, 0.1);
-  --nav-bg: rgba(255, 255, 255, 0.85);
-  --nav-border: #e6e0ff;
-  --input-bg: rgba(255, 255, 255, 0.9);
-  --input-border: #C8B6FF;
-  --icon-hover-bg: rgba(108, 59, 255, 0.05);
+  /* Theme variables - Light Mode (Default) - Clean SaaS Theme */
+  --bg-color: #FFFFFF;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --heading-color: #111827;
+  --card-bg: #FFFFFF;
+  --card-border: #E5E7EB;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --nav-border: #E5E7EB;
+  --input-bg: #FFFFFF;
+  --input-border: #D1D5DB;
+  --icon-hover-bg: #F3F4F6;
 
-  --hero-gradient: linear-gradient(135deg, #6C3BFF, #FFFFFF);
-  --hero-glow: drop-shadow(0 0 30px rgba(108, 59, 255, 0.2));
-  --btn-primary-bg: linear-gradient(135deg, #6C3BFF, #9F7BFF);
+  --hero-gradient: linear-gradient(135deg, #111827, #374151);
+  --hero-glow: none;
+  --btn-primary-bg: var(--blue);
   
   /* Feature Specific */
-  --skeleton-bg: rgba(108, 59, 255, 0.05);
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --chat-bg-user: rgba(108, 59, 255, 0.1);
-  --chat-bg-ai: rgba(255, 255, 255, 0.8);
-  --overlay-tint: rgba(0, 0, 0, 0.02);
+  --skeleton-bg: #F3F4F6;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --chat-bg-user: #F3F4F6;
+  --chat-bg-ai: #FFFFFF;
+  --overlay-tint: rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="dark"] {
@@ -252,11 +262,13 @@ h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 1.75rem;
   border-radius: var(--radius);
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-primary {
@@ -522,29 +534,47 @@ select.input-field {
 .primary-btn {
   background: var(--btn-primary-bg);
   border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 10px 30px rgba(108, 59, 255, 0.3);
   color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .primary-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 40px rgba(124, 58, 237, 0.5);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(108, 59, 255, 0.5), 0 0 20px rgba(167, 139, 250, 0.6);
   color: #fff;
 }
 
 .secondary-btn {
-  background: #ffffff;
-  border: 1px solid #c4b5fd;
-  color: #6d28d9;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  color: var(--text-primary);
   border-radius: 14px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 10px rgba(124, 58, 237, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .secondary-btn:hover {
-  background: #f7f6ff;
-  border-color: #a78bfa;
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
-  transform: translateY(-2px);
-  color: #7c3aed;
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.8);
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+  transform: translateY(-2px) scale(1.02);
+  color: var(--text-primary);
+}
+
+@keyframes pulse-glow-soft {
+  0% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(167, 139, 250, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow-soft 2s infinite;
+}
+
+.trust-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(167, 139, 250, 0.5) !important;
+  box-shadow: 0 15px 30px rgba(138, 92, 255, 0.15) !important;
 }

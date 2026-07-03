@@ -245,10 +245,10 @@ User Query: "${userText}"`;
                 zIndex: 0
             }}></div>
 
-            <div className="container chat-container" style={{ display: 'flex', flexDirection: 'column', maxWidth: '900px', margin: '0 auto 40px auto', padding: '1rem', position: 'relative', zIndex: 10, height: '70vh', maxHeight: '70vh', overflowY: 'auto' }}>
+            <div className="chat-master-container">
 
                 {/* Chat Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', borderRadius: '1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.5)', borderBottom: '3px solid var(--saffron)', position: 'sticky', top: 0, zIndex: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid var(--card-border)', zIndex: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ background: 'var(--blue)', color: 'white', padding: '0.75rem', borderRadius: '50%' }}>
                             <Bot size={24} />
@@ -275,7 +275,7 @@ User Query: "${userText}"`;
                 </div>
 
                 {/* Chat Messages Area */}
-                <div style={{ flexGrow: 1, padding: '1.5rem 0.5rem 80px 0.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="chat-messages-area">
                     {messages.map((msg) => (
                         <motion.div
                             key={msg.id}
@@ -284,7 +284,7 @@ User Query: "${userText}"`;
                             style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}
                         >
                             <div style={{
-                                background: msg.sender === 'user' ? 'var(--chat-bg-user)' : 'var(--chat-bg-ai)',
+                                background: msg.sender === 'user' ? 'var(--chat-bg-user)' : 'rgba(255, 255, 255, 0.1)',
                                 backdropFilter: 'blur(12px)',
                                 color: 'var(--text-primary)',
                                 padding: '0.75rem 1rem',
@@ -365,7 +365,7 @@ User Query: "${userText}"`;
                             style={{ display: 'flex', alignItems: 'flex-start' }}
                         >
                             <div style={{
-                                background: 'var(--glass-bg)',
+                                background: 'rgba(255, 255, 255, 0.1)',
                                 backdropFilter: 'blur(12px)',
                                 padding: '1rem',
                                 borderRadius: '0.75rem',
@@ -385,14 +385,14 @@ User Query: "${userText}"`;
                 </div>
 
                 {/* Input Area */}
-                <div style={{ position: 'sticky', bottom: 0, marginTop: '1rem', zIndex: 20 }}>
+                <div className="chat-input-area">
                     {isListening && (
-                        <div style={{ position: 'absolute', top: '-25px', left: '20px', color: 'var(--blue)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', animation: 'pulse 1.5s infinite' }}>
+                        <div style={{ position: 'absolute', top: '-15px', left: '20px', color: 'var(--blue)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', animation: 'pulse 1.5s infinite' }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--blue)' }}></div>
                             {t('chat_listening')}
                         </div>
                     )}
-                    <div style={{ padding: '0.5rem', background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', borderRadius: '50px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)', display: 'flex', gap: '0.5rem', alignItems: 'center', border: isListening ? '1px solid var(--blue)' : '1px solid var(--card-border)', transition: 'border 0.3s' }}>
+                    <div style={{ padding: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50px', display: 'flex', gap: '0.5rem', alignItems: 'center', border: isListening ? '1px solid var(--blue)' : '1px solid var(--card-border)', transition: 'border 0.3s' }}>
                         <button
                             onClick={toggleListening}
                             style={{
@@ -449,6 +449,45 @@ User Query: "${userText}"`;
             </div>
 
             <style>{`
+        .chat-master-container {
+          height: 80vh;
+          width: 100%;
+          max-width: 900px;
+          margin: 0 auto;
+          border-radius: 1rem;
+          background: var(--glass-bg);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid var(--card-border);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          z-index: 10;
+          overflow: hidden;
+        }
+
+        .chat-messages-area {
+          flex: 1;
+          overflow-y: auto;
+          padding: 1.5rem 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          scrollbar-width: none;
+        }
+
+        .chat-messages-area::-webkit-scrollbar {
+          display: none;
+        }
+
+        .chat-input-area {
+          padding: 1rem;
+          background: rgba(255, 255, 255, 0.03);
+          border-top: 1px solid var(--card-border);
+          position: relative;
+        }
+
         .typing-dot {
           width: 8px;
           height: 8px;
@@ -471,14 +510,6 @@ User Query: "${userText}"`;
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
-        }
-
-        .chat-container {
-          scrollbar-width: none;
-        }
-
-        .chat-container::-webkit-scrollbar {
-          display: none;
         }
       `}</style>
         </div>

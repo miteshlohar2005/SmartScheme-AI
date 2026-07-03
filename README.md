@@ -8,11 +8,13 @@ SmartScheme AI is a comprehensive, advanced, AI-powered government scheme discov
 
 ### 🔍 Explore & Discover
 - **Browse the Scheme Directory**: Explore active government initiatives grouped by category or state.
+- **Voice Search Integration**: Hands-free fuzzy searching powered by the native Web Speech API, with real-time speech-to-text directly in the search bar.
+- **Offline Help Center Locator**: Interactive Google Maps integration utilizing Geolocation API and native Directions API routing to help rural users physically locate nearby Common Service Centers (CSCs), Panchayats, and Government Offices.
 - **Fuzzy Search Integration**: Find precisely what you're looking for with lightning-fast fuzzy search powered by `fuse.js`.
 - **Trending Schemes**: Quick access to highly popular and trending schemes directly on the home page.
 
 ### 🧠 Advanced AI Capabilities
-- **AI Chat Assistant**: A fully integrated Gemini-powered AI chatbot ready to answer scheme-related queries contextually. Identifies eligibility and renders matching scheme cards inline with direct "Apply" and "View Details" buttons!
+- **AI Chat Assistant**: A fully integrated Gemini-powered AI chatbot ready to answer scheme-related queries contextually, featuring a pristine, unified glassmorphic flexbox UI interface. Identifies eligibility and renders matching scheme cards inline with direct "Apply" and "View Details" buttons!
 - **AI Profile Matching**: Check eligibility instantly by securely providing basic demographic and financial information.
 - **Smart Scoring Mechanism**: Evaluates profile data natively and calculates accurate Match Scores and Approval Probabilities.
 - **Missed & Future Benefit Predictor**: Detects schemes you might have missed historically and estimates countdowns for upcoming scheme eligibilities based on age/income.
@@ -46,6 +48,7 @@ SmartScheme AI is a comprehensive, advanced, AI-powered government scheme discov
 
 **Functionality & Utilities**
 - [Google Generative AI](https://ai.google.dev/) - `@google/generative-ai` for intelligent chat orchestration.
+- [React Google Maps API](https://react-google-maps-api-docs.netlify.app/) - `@react-google-maps/api` for rendering Help Center locators and native live routing overlays.
 - [Fuse.js](https://fusejs.io/) - Powerful, lightweight fuzzy-search.
 - [React Dropzone](https://react-dropzone.js.org/) - HTML5-compliant drag 'n' drop zone for files.
 - [jsPDF](https://parall.ax/products/jspdf) - Client-side generation for downloading detailed Scheme PDFs.
@@ -75,10 +78,13 @@ Make sure you have Node.js and npm installed.
    ```
 
 3. **Environment Setup**
-   You need a Google Gemini API Key for the AI features.
+   You need API keys for Google Gemini and Google Maps.
    - Create a `.env` file in the root directory.
-   - Add your API key: `VITE_GEMINI_API_KEY=your_api_key_here`
-   *(Note: The current API key might be hardcoded in ChatAssistant.jsx for testing purposes, but moving it to .env is highly recommended for production security!)*
+   - Add your API keys:
+     ```env
+     VITE_GEMINI_API_KEY=your_gemini_api_key_here
+     VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+     ```
 
 4. **Run the Development Server**
    ```bash
@@ -113,6 +119,7 @@ SmartScheme AI/
 │   │   ├── SchemeDetail.jsx     # Deepdive with drag-&-drop upload verification
 │   │   ├── CompareSchemes.jsx   # Side-by-side comparison tables
 │   │   ├── MyApplications.jsx   # Timeline app tracker
+│   │   ├── HelpCenterLocator.jsx# Google Maps CSC Locator and Routing
 │   │   ├── ChatAssistant.jsx    # The AI Hub
 │   │   └── ...
 │   ├── services/         # API abstraction and fetching logic (schemeApi.js)

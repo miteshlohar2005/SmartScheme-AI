@@ -1,127 +1,98 @@
-import { db } from '../firebase';
-import { collection, getDocs, query, where, limit, startAfter, orderBy } from 'firebase/firestore';
-import Fuse from 'fuse.js';
+// API Configuration
+const API_BASE_URL = 'http://localhost:5000/api';
 
-// We will use mock data if Firebase isn't fully set up with a database yet
-// This allows the frontend to work perfectly while we finalize the DB.
-import { mockSchemes } from '../data/schemeSeeder';
+// Simple in-memory cache for frontend to avoid re-fetching same queries instantly
+const cache = new Map();
 
 export const fetchSchemes = async ({
     page = 1,
-    itemsPerPage = 10,
+    itemsPerPage = 12,
     searchQuery = "",
     categoryFilter = "All",
     stateFilter = "All",
     language = "en"
 }) => {
     try {
-        // 1. Start with our mock data as the source of truth for now
-        let results = [...mockSchemes];
-
-        // 2. Apply Filters
-        if (categoryFilter !== "All") {
-            results = results.filter(s => s.category === categoryFilter);
+        const queryParams = new URLSearchParams();
+        if (searchQuery.trim()) queryParams.append('query', searchQuery);
+        if (categoryFilter !== 'All') queryParams.append('category', categoryFilter);
+        if (stateFilter !== 'All') queryParams.append('state', stateFilter);
+        
+        const url = `${API_BASE_URL}/schemes?${queryParams.toString()}`;
+        
+        let allSchemes = [];
+        
+        // Check simple frontend cache
+        if (cache.has(url)) {
+            allSchemes = cache.get(url);
+        } else {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error("Failed to fetch schemes from backend");
+            }
+            const data = await response.json();
+            allSchemes = data.schemes || [];
+            cache.set(url, allSchemes);
         }
 
-        if (stateFilter !== "All") {
-            results = results.filter(s => s.state === stateFilter || s.state === "Central");
-        }
-
-        // 3. Apply Fuzzy Search (Fuse.js)
-        if (searchQuery.trim() !== "") {
-            const fuse = new Fuse(results, {
-                keys: [
-                    `en.name`, `hi.name`, `mr.name`,
-                    'tags',
-                    'category',
-                    `en.shortDesc`, `hi.shortDesc`, `mr.shortDesc`
-                ],
-                threshold: 0.3, // 0.0 requires perfect match, 1.0 matches anything
-            });
-            const searchResults = fuse.search(searchQuery);
-            results = searchResults.map(result => result.item);
-        }
-
-        // 4. Transform data based on selected language
-        // Flatten the localized object into the main object for easy UI mapping
-        const localizedResults = results.map(scheme => ({
-            id: scheme.id,
-            category: scheme.category,
-            state: scheme.state,
-            launchYear: scheme.launchYear,
-            tags: scheme.tags,
-            url: scheme.url,
-            applicationMode: scheme.applicationMode,
-            name: scheme[language]?.name || scheme.en.name,
-            shortDesc: scheme[language]?.shortDesc || scheme.en.shortDesc,
-            desc: scheme[language]?.desc || scheme.en.desc,
-            eligibility: scheme[language]?.eligibility || scheme.en.eligibility,
-            benefits: scheme[language]?.benefits || scheme.en.benefits,
-            documents: scheme[language]?.documents || scheme.en.documents,
-        }));
-
-        // 5. Apply Pagination
+        // Apply Pagination
         const startIndex = (page - 1) * itemsPerPage;
-        const paginatedResults = localizedResults.slice(startIndex, startIndex + itemsPerPage);
+        const paginatedResults = allSchemes.slice(startIndex, startIndex + itemsPerPage);
 
         return {
             data: paginatedResults,
-            totalCount: localizedResults.length,
-            totalPages: Math.ceil(localizedResults.length / itemsPerPage),
+            totalCount: allSchemes.length,
+            totalPages: Math.ceil(allSchemes.length / itemsPerPage) || 1,
             currentPage: page
         };
-
     } catch (error) {
         console.error("Error fetching schemes:", error);
-        return { data: [], totalCount: 0, totalPages: 0, currentPage: 1 };
+        return { data: [], totalCount: 0, totalPages: 1, currentPage: 1 };
     }
 };
 
 export const fetchSchemeById = async (id, language = 'en') => {
-    try {
-        const scheme = mockSchemes.find(s => s.id === id);
-        if (!scheme) return null;
-
-        return {
-            id: scheme.id,
-            category: scheme.category,
-            state: scheme.state,
-            launchYear: scheme.launchYear,
-            tags: scheme.tags,
-            url: scheme.url,
-            applicationMode: scheme.applicationMode,
-            name: scheme[language]?.name || scheme.en.name,
-            shortDesc: scheme[language]?.shortDesc || scheme.en.shortDesc,
-            desc: scheme[language]?.desc || scheme.en.desc,
-            eligibility: scheme[language]?.eligibility || scheme.en.eligibility,
-            benefits: scheme[language]?.benefits || scheme.en.benefits,
-            documents: scheme[language]?.documents || scheme.en.documents,
-        };
-    } catch (error) {
-        console.error("Error fetching scheme by ID:", error);
-        return null;
+    // Since we don't have a specific endpoint for ID, we can search the cache
+    // or we might need to make a general query. Usually, the user navigates from the directory.
+    // For simplicity, let's look through all cached values first.
+    for (const schemes of cache.values()) {
+        const found = schemes.find(s => s.id === id);
+        if (found) return found;
     }
+    
+    // If not found in cache, we could query Gemini for the specific ID, but ID is a generated UUID.
+    // In a real app with a DB, we'd hit /api/schemes/:id
+    // For now, if someone refreshes the page directly on a scheme detail, they might need to go back.
+    console.warn("Scheme not found in local cache. Please return to directory.");
+    return null;
 };
 
 export const getAIRecommendations = async (userProfile, language = 'en') => {
-    // Simulate AI fetching tailored schemes
-    let results = [...mockSchemes];
-
-    // Basic mock AI logic: find schemes where tags intersect with user profile words
-    const profileWords = userProfile.toLowerCase().split(' ');
-
-    const recommended = results.filter(scheme => {
-        return scheme.tags.some(tag => profileWords.includes(tag.toLowerCase()));
-    });
-
-    // Apply language transformation
-    const localizedRecommendations = (recommended.length > 0 ? recommended : results.slice(0, 3)).map(scheme => ({
-        id: scheme.id,
-        category: scheme.category,
-        name: scheme[language]?.name || scheme.en.name,
-        shortDesc: scheme[language]?.shortDesc || scheme.en.shortDesc,
-        tags: scheme.tags
-    }));
-
-    return localizedRecommendations;
+    try {
+        const queryParams = new URLSearchParams({ query: userProfile });
+        const url = `${API_BASE_URL}/schemes?${queryParams.toString()}`;
+        
+        let allSchemes = [];
+        if (cache.has(url)) {
+            allSchemes = cache.get(url);
+        } else {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Failed to fetch AI recommendations");
+            const data = await response.json();
+            allSchemes = data.schemes || [];
+            cache.set(url, allSchemes);
+        }
+        
+        // Return top 3 recommendations
+        return allSchemes.slice(0, 3).map(scheme => ({
+            id: scheme.id,
+            category: scheme.category,
+            name: scheme.name,
+            shortDesc: scheme.description, // using description as shortDesc
+            tags: scheme.tags || []
+        }));
+    } catch (error) {
+        console.error("Error fetching AI recommendations:", error);
+        return [];
+    }
 };

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Loader, AlertCircle, Sparkles, ChevronRight } from 'lucide-react';
+import { Search, Filter, Loader, AlertCircle, Sparkles, ChevronRight, Mic } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { fetchSchemes, getAIRecommendations } from '../services/schemeApi';
 import SchemeCard from '../components/SchemeCard';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 
 const SchemeSkeleton = () => (
     <div className="card" style={{
@@ -28,6 +30,7 @@ const SchemeSkeleton = () => (
 const SchemeDirectory = () => {
     const { t, i18n } = useTranslation();
     const language = i18n.language;
+    const navigate = useNavigate();
 
     const [schemes, setSchemes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -48,8 +51,63 @@ const SchemeDirectory = () => {
     const categories = ["All", "Agriculture", "Women", "Education", "Health", "Startup", "Housing"];
     const states = ["All", "Central", "Maharashtra", "Uttar Pradesh", "Karnataka"]; // Expand as needed
 
+    // Voice Search State
+    const [isListening, setIsListening] = useState(false);
+    const [speechSupported, setSpeechSupported] = useState(true);
+
     // Debounced Search implementation
     const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
+    // Web Speech API Integration
+    const handleVoiceSearch = () => {
+        // Future Upgrade Note: The Web Speech API is currently experimental and may require vendor prefixes.
+        // Consider migrating to a robust polyfill or a third-party service like Google Cloud Speech-to-Text 
+        // if native browser support becomes an issue across target user devices.
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            setSpeechSupported(false);
+            console.warn("Web Speech API is not supported in this browser.");
+            alert("Voice search is not supported in your browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        // Match the recognition language with the current app language context if needed
+        // For now, mapping broadly based on existing locales, default to en-IN
+        const langMap = { en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN', ta: 'ta-IN' };
+        recognition.lang = langMap[language] || 'en-IN';
+
+        recognition.onstart = () => {
+            setIsListening(true);
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setSearchQuery(transcript);
+            setIsListening(false);
+            // The debounced effect will automatically trigger the search fetch
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+            setIsListening(false);
+            if (event.error === 'not-allowed') {
+                alert("Microphone access was denied. Please allow microphone permissions to use voice search.");
+            } else {
+                alert("Failed to recognize speech. Please try again.");
+            }
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        recognition.start();
+    };
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -183,7 +241,7 @@ const SchemeDirectory = () => {
                                             <h4 style={{ color: 'white', fontWeight: '600', marginBottom: '4px' }}>{rec.name}</h4>
                                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{rec.shortDesc}</p>
                                         </div>
-                                        <button onClick={() => setSearchQuery(rec.name)} style={{ background: 'transparent', border: 'none', color: 'var(--blue-light)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                        <button onClick={() => navigate(`/scheme/${rec.id}`)} style={{ background: 'transparent', border: 'none', color: 'var(--blue-light)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                             View <ChevronRight size={16} />
                                         </button>
                                     </div>
@@ -207,8 +265,8 @@ const SchemeDirectory = () => {
                 }}>
 
                     {/* Top Row: Search */}
-                    <div style={{ position: 'relative', width: '100%' }}>
-                        <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>
+                    <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+                        <div style={{ position: 'absolute', left: '1rem', color: 'var(--text-secondary)', pointerEvents: 'none' }}>
                             <Search size={20} />
                         </div>
                         <input
@@ -218,7 +276,7 @@ const SchemeDirectory = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '1rem 1rem 1rem 3rem',
+                                padding: '1rem 3rem 1rem 3rem',
                                 borderRadius: '12px',
                                 background: 'rgba(15, 23, 42, 0.6)',
                                 border: '1px solid rgba(255,255,255,0.1)',
@@ -228,6 +286,38 @@ const SchemeDirectory = () => {
                                 transition: 'border-color 0.2s'
                             }}
                         />
+                        {speechSupported && (
+                            <button
+                                onClick={handleVoiceSearch}
+                                title={t('voice_search', 'Voice Search')}
+                                style={{
+                                    position: 'absolute',
+                                    right: '1rem',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: isListening ? '#ef4444' : 'var(--text-secondary)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '0.2rem',
+                                    borderRadius: '50%',
+                                    outline: 'none',
+                                    transition: 'color 0.3s'
+                                }}
+                            >
+                                {isListening ? (
+                                    <motion.div
+                                        animate={{ scale: [1, 1.3, 1], opacity: [1, 0.6, 1] }}
+                                        transition={{ repeat: Infinity, duration: 1.2 }}
+                                    >
+                                        <Mic size={20} color="#ef4444" />
+                                    </motion.div>
+                                ) : (
+                                    <Mic size={20} />
+                                )}
+                            </button>
+                        )}
                     </div>
 
                     {/* Bottom Row: Select Filters */}
