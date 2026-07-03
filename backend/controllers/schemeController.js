@@ -16,6 +16,28 @@ const getSchemes = async (req, res, next) => {
     }
 };
 
+const checkEligibility = async (req, res, next) => {
+    try {
+        const profile = req.body;
+        const result = await schemeService.checkEligibility(profile);
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const chatAssistant = async (req, res, next) => {
+    try {
+        const { message } = req.body;
+        const result = await schemeService.chatAssistant(message);
+        res.json({ text: result });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
-    getSchemes
+    getSchemes,
+    checkEligibility,
+    chatAssistant
 };

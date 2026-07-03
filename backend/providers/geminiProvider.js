@@ -133,6 +133,109 @@ const fetchSchemesFromGemini = async (searchQuery) => {
     }
 };
 
+const evaluateEligibility = async (profile) => {
+    if (!model) {
+        initGemini();
+        if (!model) {
+            logger.error("[Gemini Provider] Gemini API not configured.");
+            return { matchedSchemes: [], recommendations: [], summary: "API Error", score: 0 };
+        }
+    }
+
+    const prompt = `You are a government scheme expert for Indian citizens.
+Evaluate the following user profile and return matching government schemes, additional recommendations, a short summary of their eligibility, and a matching score (0-100).
+
+User Profile:
+- Full Name: ${profile.fullName || 'N/A'}
+- Age: ${profile.age || 'N/A'}
+- Gender: ${profile.gender || 'N/A'}
+- Annual Income: ${profile.income || 'N/A'}
+- Category: ${profile.category || 'N/A'}
+- State: ${profile.state || 'N/A'}
+- Occupation: ${profile.occupation || 'N/A'}
+- Differently Abled: ${profile.differentlyAbled ? 'Yes' : 'No'}
+
+CRITICAL INSTRUCTIONS:
+- Return ONLY real Indian Government schemes.
+- Never invent schemes.
+- Provide a STRICT JSON response.
+
+JSON Format:
+{
+  "matchedSchemes": [
+    {
+      "id": "unique-id",
+      "name": "Scheme Name",
+      "description": "Short description",
+      "ministry": "Ministry Name",
+      "applyLink": "URL",
+      "eligibilityReason": "Why they match"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "unique-id",
+      "name": "Scheme Name",
+      "description": "Short description",
+      "reason": "Why recommended"
+    }
+  ],
+  "summary": "2-3 sentences summarizing their overall eligibility.",
+  "score": 85
+}`;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const result = await model.generateContent(prompt);
+            let cleanedText = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
+            const data = JSON.parse(cleanedText);
+            
+            if (!data.matchedSchemes) data.matchedSchemes = [];
+            if (!data.recommendations) data.recommendations = [];
+            
+            const generateId = () => 'scheme_' + Math.random().toString(36).substr(2, 9);
+            data.matchedSchemes.forEach(s => s.id = s.id || generateId());
+            data.recommendations.forEach(s => s.id = s.id || generateId());
+
+            return data;
+        } catch (error) {
+            logger.error("[Gemini Provider] evaluateEligibility error:", error.message);
+            if (attempt === 2) {
+                return { matchedSchemes: [], recommendations: [], summary: "Failed to fetch data.", score: 0 };
+            }
+        }
+    }
+};
+
+const chatWithAssistant = async (message) => {
+    if (!model) {
+        initGemini();
+        if (!model) {
+            return "Sorry, my AI services are currently disconnected.";
+        }
+    }
+
+    const prompt = `You are the official AI assistant for SmartScheme AI, a safe, transparent platform helping citizens of India find government schemes. 
+Your job is to answer the user's questions about what schemes they might qualify for based on your extensive knowledge of Indian Government Schemes.
+
+- Talk warmly and professionally like a government helper.
+- Use simple Markdown (like bolding scheme names or using bullet points) to format neatly.
+- If they provided enough details and you found matching schemes, you MUST include a special tag at the very end of your message in this exact format: [SCHEMES: scheme-name-1, scheme-name-2]. 
+- If they don't give you enough information to check schemes (Age, Income, Occupation, State, Category), politely ask them to describe themselves a bit more!
+
+User Query: "${message}"`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+    } catch (error) {
+        logger.error("[Gemini Provider] chatWithAssistant error:", error.message);
+        return "I'm having trouble connecting to my knowledge base right now. Please try again later.";
+    }
+};
+
 module.exports = {
-    fetchSchemesFromGemini
+    fetchSchemesFromGemini,
+    evaluateEligibility,
+    chatWithAssistant
 };

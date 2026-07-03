@@ -70,28 +70,51 @@ export const fetchSchemeById = async (id, language = 'en') => {
     return null;
 };
 
+export const checkEligibilityAPI = async (userProfile, language = 'en') => {
+    try {
+        const url = `${API_URL}/schemes/eligibility`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userProfile)
+        });
+        
+        if (!response.ok) throw new Error("Failed to check eligibility");
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error checking eligibility:", error);
+        return { matchedSchemes: [], recommendations: [], summary: "Error calculating eligibility.", score: 0 };
+    }
+};
+
+export const sendChatMessage = async (message, language = 'en') => {
+    try {
+        const url = `${API_URL}/schemes/chat`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        
+        if (!response.ok) throw new Error("Failed to send chat message");
+        
+        const data = await response.json();
+        return data.text;
+    } catch (error) {
+        console.error("Error sending chat message:", error);
+        return "I'm having trouble connecting to my knowledge base right now. Please try again later.";
+    }
+};
 export const getAIRecommendations = async (userProfile, language = 'en') => {
     try {
-        const queryParams = new URLSearchParams({ query: userProfile });
-        const url = `${API_URL}/schemes?${queryParams.toString()}`;
-
-        let allSchemes = [];
-        if (cache.has(url)) {
-            allSchemes = cache.get(url);
-        } else {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Failed to fetch AI recommendations");
-            const data = await response.json();
-            allSchemes = data.schemes || [];
-            cache.set(url, allSchemes);
-        }
-
-        // Return top 3 recommendations
-        return allSchemes.slice(0, 3).map(scheme => ({
+        const result = await fetchSchemes({ searchQuery: userProfile, language });
+        return result.data.slice(0, 3).map(scheme => ({
             id: scheme.id,
             category: scheme.category,
             name: scheme.name,
-            shortDesc: scheme.description, // using description as shortDesc
+            shortDesc: scheme.description,
             tags: scheme.tags || []
         }));
     } catch (error) {

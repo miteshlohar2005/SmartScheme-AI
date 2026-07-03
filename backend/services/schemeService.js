@@ -32,6 +32,28 @@ const searchSchemes = async (query, category, state) => {
     }
 };
 
+const checkEligibility = async (profile) => {
+    try {
+        const result = await geminiProvider.evaluateEligibility(profile);
+        return result;
+    } catch (error) {
+        logger.error("Error in checkEligibility:", error);
+        throw error;
+    }
+};
+
+const chatAssistant = async (message) => {
+    try {
+        const text = await geminiProvider.chatWithAssistant(message);
+        return text;
+    } catch (error) {
+        logger.error("Error in chatAssistant:", error);
+        throw error;
+    }
+};
+
 module.exports = {
-    searchSchemes
+    searchSchemes,
+    checkEligibility,
+    chatAssistant
 };

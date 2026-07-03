@@ -2,13 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Bot, User, Trash2, ShieldCheck, CheckCircle2, Mic, MicOff, Volume2, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { schemesDB } from '../data/schemes';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { sendChatMessage } from '../services/schemeApi';
 import { useTranslation } from 'react-i18next';
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 const ChatAssistant = () => {
     const { t, i18n } = useTranslation();
@@ -72,9 +67,6 @@ const ChatAssistant = () => {
                 if (finalTranscript) {
                     setInput(prev => prev + (prev ? ' ' : '') + finalTranscript);
                 } else if (interimTranscript) {
-                    // Optionally show interim results somewhere, or just update input directly
-                    // but usually updating input directly on interim makes editing hard.
-                    // For now, we wait for final to append, or we overwrite. Let's overwrite for simplicity.
                     setInput(interimTranscript);
                 }
             };
@@ -92,7 +84,6 @@ const ChatAssistant = () => {
         }
     }, []);
 
-    // Update language when it changes contextually
     useEffect(() => {
         if (recognitionRef.current) {
             recognitionRef.current.lang = speechLocale;
@@ -116,22 +107,19 @@ const ChatAssistant = () => {
     const speakText = (text, messageId) => {
         if (!synthesisRef.current) return;
 
-        // If already speaking this message, stop it
         if (isSpeakingId === messageId) {
             synthesisRef.current.cancel();
             setIsSpeakingId(null);
             return;
         }
 
-        synthesisRef.current.cancel(); // Stop any current speech
+        synthesisRef.current.cancel();
 
-        // Strip markdown asterisks for cleaner reading
         const cleanText = text.replace(/\*\*/g, '');
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = speechLocale;
 
-        // Try to find a natural voice for the locale
         const voices = synthesisRef.current.getVoices();
         const preferredVoice = voices.find(v => v.lang === speechLocale) || voices.find(v => v.lang.startsWith(speechLocale.split('-')[0]));
         if (preferredVoice) {
@@ -145,7 +133,6 @@ const ChatAssistant = () => {
         synthesisRef.current.speak(utterance);
     };
 
-    // Cleanup speech synthesis on unmount
     useEffect(() => {
         return () => {
             if (synthesisRef.current) {
@@ -153,28 +140,6 @@ const ChatAssistant = () => {
             }
         };
     }, []);
-
-    const generateAIResponseFromGemini = async (userText) => {
-        try {
-            const prompt = `You are the official AI assistant for SmartScheme AI, a safe, transparent platform helping citizens of India find government schemes. 
-Here is a complete JSON list of the active schemes in our platform's secure database: ${JSON.stringify(schemesDB)}.
-
-Your job is to read the user's details and answer their questions about what schemes they might qualify for based on that database. 
-- Talk warmly and professionally like a government helper.
-- DO NOT mention the JSON database technically, just parse it in your head and tell them names of schemes they match.
-- Use simple Markdown (like bolding scheme names or using bullet points) to format neatly.
-- If they provided enough details and you found matching schemes, you MUST include a special tag at the very end of your message in this exact format: [SCHEMES: id1, id2, id3] where id1, id2 are the exact IDs from the JSON database. For example: [SCHEMES: pm-kisan, ayushman-bharat]. Only include the IDs of the schemes you explicitly recommended.
-- If they don't give you enough information to check schemes (Age, Income, Occupation, State, Category), politely ask them to describe themselves a bit more!
-
-User Query: "${userText}"`;
-
-            const result = await model.generateContent(prompt);
-            return result.response.text();
-        } catch (error) {
-            console.error(error);
-            return t('chat_error');
-        }
-    };
 
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -190,14 +155,21 @@ User Query: "${userText}"`;
         setInput('');
         setIsTyping(true);
 
-        // Fetch AI Response dynamically via Gemini
-        let aiResponseText = await generateAIResponseFromGemini(userMsg.text);
+        // Fetch AI Response from backend
+        let aiResponseText = await sendChatMessage(userMsg.text);
 
         let recommendedSchemes = [];
         const match = aiResponseText.match(/\[SCHEMES:\s*(.*?)\]/);
         if (match) {
             const ids = match[1].split(',').map(s => s.trim());
-            recommendedSchemes = schemesDB.filter(s => ids.includes(s.id));
+            
+            // Generate mock display data from scheme names since we don't have the full DB
+            recommendedSchemes = ids.map(id => ({
+                id: id.toLowerCase().replace(/\s+/g, '-'),
+                name: id.replace(/-/g, ' '),
+                shortDesc: "Please check the official portal for details on this recommended scheme."
+            }));
+            
             aiResponseText = aiResponseText.replace(/\[SCHEMES:\s*(.*?)\]/, '').trim();
         }
 
@@ -212,7 +184,6 @@ User Query: "${userText}"`;
         setMessages(prev => [...prev, aiMsg]);
         setIsTyping(false);
 
-        // Auto-read response
         speakText(aiResponseText, aiMsg.id);
     };
 

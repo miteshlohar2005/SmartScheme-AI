@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Loader, ShieldCheck, Mic, MicOff, User, Calendar, Users, IndianRupee, Tag, MapPin, Briefcase, Activity, CheckCircle, Download, Share2, Bookmark, FileText, Clock, Sparkles, ChevronRight, Award } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getAIRecommendations } from '../services/schemeApi';
 import { useNavigate } from 'react-router-dom';
 
 const EligibilityForm = () => {
@@ -159,22 +158,23 @@ const EligibilityForm = () => {
         setLoading(true);
         setShowResults(false);
 
-        const profileQuery = `${formData.occupation} ${formData.gender} ${formData.category} from ${formData.state}`;
-        
         try {
-            const recs = await getAIRecommendations(profileQuery, 'en');
-            setRecommendations(recs);
+            // Using POST /api/eligibility
+            const response = await fetch(import.meta.env.VITE_API_URL + '/api/schemes/eligibility' || 'http://localhost:5000/api/schemes/eligibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            if (!response.ok) throw new Error("API Error");
+            const data = await response.json();
+            
+            // Navigate to Results page with the backend response
+            navigate('/results', { state: { eligibilityData: data, profile: formData } });
         } catch (err) {
             console.error(err);
-            setRecommendations([]);
+            setLoading(false);
         }
-
-        setLoading(false);
-        setShowResults(true);
-        
-        setTimeout(() => {
-            document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
     };
 
     const FloatingInput = ({ icon: Icon, type, name, label, options, placeholder = " " }) => {
