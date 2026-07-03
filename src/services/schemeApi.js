@@ -1,6 +1,8 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+const API_URL = `${API_URL}/api`;
 // Simple in-memory cache for frontend to avoid re-fetching same queries instantly
 const cache = new Map();
 
@@ -17,11 +19,11 @@ export const fetchSchemes = async ({
         if (searchQuery.trim()) queryParams.append('query', searchQuery);
         if (categoryFilter !== 'All') queryParams.append('category', categoryFilter);
         if (stateFilter !== 'All') queryParams.append('state', stateFilter);
-        
-        const url = `${API_BASE_URL}/schemes?${queryParams.toString()}`;
-        
+
+        const url = `${API_URL}/schemes?${queryParams.toString()}`;
+
         let allSchemes = [];
-        
+
         // Check simple frontend cache
         if (cache.has(url)) {
             allSchemes = cache.get(url);
@@ -59,7 +61,7 @@ export const fetchSchemeById = async (id, language = 'en') => {
         const found = schemes.find(s => s.id === id);
         if (found) return found;
     }
-    
+
     // If not found in cache, we could query Gemini for the specific ID, but ID is a generated UUID.
     // In a real app with a DB, we'd hit /api/schemes/:id
     // For now, if someone refreshes the page directly on a scheme detail, they might need to go back.
@@ -70,8 +72,8 @@ export const fetchSchemeById = async (id, language = 'en') => {
 export const getAIRecommendations = async (userProfile, language = 'en') => {
     try {
         const queryParams = new URLSearchParams({ query: userProfile });
-        const url = `${API_BASE_URL}/schemes?${queryParams.toString()}`;
-        
+        const url = `${API_URL}/schemes?${queryParams.toString()}`;
+
         let allSchemes = [];
         if (cache.has(url)) {
             allSchemes = cache.get(url);
@@ -82,7 +84,7 @@ export const getAIRecommendations = async (userProfile, language = 'en') => {
             allSchemes = data.schemes || [];
             cache.set(url, allSchemes);
         }
-        
+
         // Return top 3 recommendations
         return allSchemes.slice(0, 3).map(scheme => ({
             id: scheme.id,

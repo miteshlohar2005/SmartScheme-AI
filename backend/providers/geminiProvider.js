@@ -5,7 +5,7 @@ let genAI = null;
 let model = null;
 
 const initGemini = () => {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         logger.warn("API Key is not set. Gemini provider will fail.");
         return;
@@ -65,28 +65,28 @@ const fetchSchemesFromGemini = async (searchQuery) => {
 
     const prompt = `${systemPrompt}\n\nUser Request: ${searchQuery}`;
     logger.log(`[Gemini Provider] Request Query: ${searchQuery}`);
-    
+
     // Attempt up to 2 times for timeout/transient errors
     for (let attempt = 1; attempt <= 2; attempt++) {
         try {
             logger.log(`[Gemini Provider] Attempt ${attempt} started...`);
-            
+
             // 2. Simple SDK Call
             const result = await model.generateContent(prompt);
 
             // 3. Raw Response
             const rawResponseText = result.response.text();
             logger.log(`[Gemini Provider] Raw Response Text: \n${rawResponseText}`);
-            
+
             // 4. Strip markdown code fences
             const cleanedResponseText = rawResponseText.replace(/```json/gi, '').replace(/```/g, '').trim();
             logger.log(`[Gemini Provider] Cleaned Response Text: \n${cleanedResponseText}`);
-            
+
             try {
                 // 5. Parse JSON
                 const data = JSON.parse(cleanedResponseText);
                 logger.log(`[Gemini Provider] Parsed JSON Successfully`);
-                
+
                 // 7. Validate schemes array
                 if (data && Array.isArray(data.schemes)) {
                     data.schemes.forEach((scheme, index) => {
@@ -94,7 +94,7 @@ const fetchSchemesFromGemini = async (searchQuery) => {
                         if (!scheme.id || scheme.id === 'unique-id') {
                             scheme.id = 'scheme_' + Math.random().toString(36).substr(2, 9);
                         }
-                        
+
                         // 8. Populate defaults for optional fields
                         scheme.documents = Array.isArray(scheme.documents) ? scheme.documents : [];
                         scheme.officialWebsite = scheme.officialWebsite || "";
@@ -108,7 +108,7 @@ const fetchSchemesFromGemini = async (searchQuery) => {
 
                         logger.log(`[Gemini Provider] Validated Scheme ${index + 1}: ${scheme.name}`);
                     });
-                    
+
                     // 10. Return parsed schemes
                     return data.schemes;
                 } else {
